@@ -432,80 +432,11 @@
         }
 
         function playVictorySound() {
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            if (!audioContext) {
-                audioContext = new AudioCtx();
-            }
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-
-            const now = audioContext.currentTime;
-
-            // 마스터 게인으로 전체 볼륨 제어
-            const masterGain = audioContext.createGain();
-            masterGain.gain.setValueAtTime(0.0001, now);
-            masterGain.connect(audioContext.destination);
-            masterGain.gain.exponentialRampToValueAtTime(1.0, now + 0.02);
-            masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-
-            // 짧은 서브 베이스 임팩트
-            const bass = audioContext.createOscillator();
-            const bassGain = audioContext.createGain();
-            bass.type = 'sawtooth';
-            bass.frequency.setValueAtTime(130.81, now); // C3
-            bassGain.gain.setValueAtTime(0.0001, now);
-            bassGain.gain.exponentialRampToValueAtTime(0.28, now + 0.02);
-            bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
-            bass.connect(bassGain);
-            bassGain.connect(masterGain);
-            bass.start(now);
-            bass.stop(now + 0.6);
-
-            // 화려한 아르페지오(화음)
-            const chord = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-            chord.forEach((freq, i) => {
-                const osc = audioContext.createOscillator();
-                const g = audioContext.createGain();
-                const start = now + i * 0.08;
-                const end = start + 0.6;
-
-                osc.type = i === 3 ? 'triangle' : 'sine';
-                osc.frequency.setValueAtTime(freq, start);
-
-                g.gain.setValueAtTime(0.0001, start);
-                g.gain.exponentialRampToValueAtTime(0.22, start + 0.02);
-                g.gain.exponentialRampToValueAtTime(0.0001, end);
-
-                osc.connect(g);
-                g.connect(masterGain);
-
-                osc.start(start);
-                osc.stop(end);
+            const fanfareAudio = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_success_fanfare.ogg');
+            fanfareAudio.volume = 0.5;
+            fanfareAudio.play().catch(error => {
+                console.warn('Audio play failed:', error);
             });
-
-            // 화려한 잡음(심벌/스파클) 효과
-            const bufferLen = Math.floor(audioContext.sampleRate * 0.28);
-            const noiseBuf = audioContext.createBuffer(1, bufferLen, audioContext.sampleRate);
-            const data = noiseBuf.getChannelData(0);
-            for (let i = 0; i < bufferLen; i++) {
-                data[i] = (Math.random() * 2 - 1) * Math.exp(-i / bufferLen * 4);
-            }
-            const noiseSrc = audioContext.createBufferSource();
-            noiseSrc.buffer = noiseBuf;
-            const noiseFilter = audioContext.createBiquadFilter();
-            noiseFilter.type = 'highpass';
-            noiseFilter.frequency.value = 900;
-            const noiseGain = audioContext.createGain();
-            noiseGain.gain.setValueAtTime(0.0001, now + 0.12);
-            noiseGain.gain.exponentialRampToValueAtTime(0.36, now + 0.14);
-            noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
-
-            noiseSrc.connect(noiseFilter);
-            noiseFilter.connect(noiseGain);
-            noiseGain.connect(masterGain);
-            noiseSrc.start(now + 0.12);
-            noiseSrc.stop(now + 0.9);
         }
 
         // 테마 설정 (로컬 스토리지 확인)
